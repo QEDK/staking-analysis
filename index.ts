@@ -6,7 +6,7 @@ import maticAbi from './abis/Matic.abi.json'
 import validatorShareAbi from './abis/ValidatorShare.abi.json'
 
 const main = async (): Promise<void> => {
-  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL ?? 'https://rpc.ankr.com/eth')
 
   const stakeManager = new ethers.Contract('0x5e3Ef299fDDf15eAa0432E6e66473ace8c13D908', ethers.Interface.from(stakeManagerAbi), provider)
   const matic = new ethers.Contract('0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', ethers.Interface.from(maticAbi), provider)
