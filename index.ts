@@ -51,11 +51,13 @@ const main = async (): Promise<void> => {
   let delegatorClaimedRewards = BigInt(0)
   let delegatorStakeAmount = BigInt(0)
   let delegatorUnclaimedRewards = BigInt(0)
+  let delegatorUnclaimedStake = BigInt(0)
   const validatorContracts: any = {}
   const liquidRewardPromises: any[] = []
   for (let i = 1; i <= lastDelegatorCounter; i += 1000) {
     const delegators = (await request('https://api.thegraph.com/subgraphs/name/maticnetwork/mainnet-root-subgraphs', gql`{
             delegators(first: 1000, where: {counter_gte: ${i}}, orderBy: counter, orderDirection: asc) {
+              unclaimedAmount
               claimedRewards
               delegatedAmount
               validatorId
@@ -66,6 +68,7 @@ const main = async (): Promise<void> => {
     for (const delegator of delegators) {
       delegatorClaimedRewards += BigInt(delegator.claimedRewards)
       delegatorStakeAmount += BigInt(delegator.delegatedAmount)
+      delegatorUnclaimedStake += BigInt(delegator.unclaimedAmount)
       if (validatorContracts[delegator.validatorId] === undefined) {
         validatorContracts[delegator.validatorId] = new ethers.Contract(await stakeManager.getValidatorContract(delegator.validatorId), ethers.Interface.from(validatorShareAbi), provider)
       }
@@ -91,7 +94,7 @@ const main = async (): Promise<void> => {
   let validatorUnclaimedRewards = BigInt(0)
   let validatorSelfStake = BigInt(0)
   let validatorUnclaimedStake = BigInt(0)
-  let delegatorUnclaimedStake = BigInt(0)
+  let delegatorInactiveStake = BigInt(0)
   let validatorUnclaimedTotalStaked = BigInt(0)
   for (let i = 1; i <= lastValidatorId; i += 1000) {
     const validators = (await request('https://api.thegraph.com/subgraphs/name/maticnetwork/mainnet-root-subgraphs', gql`{
@@ -111,7 +114,7 @@ const main = async (): Promise<void> => {
         validatorSelfStake += BigInt(validator.selfStake)
       } else {
         validatorUnclaimedStake += BigInt(validator.selfStake)
-        delegatorUnclaimedStake += BigInt(validator.delegatedStake)
+        delegatorInactiveStake += BigInt(validator.delegatedStake)
         validatorUnclaimedTotalStaked += BigInt(validator.totalStaked)
       }
     }
@@ -119,13 +122,13 @@ const main = async (): Promise<void> => {
   console.log('Total validator claimed rewards:', validatorClaimedRewards)
   console.log('Total validator unclaimed rewards:', validatorUnclaimedRewards)
   console.log('Total validator self-stake:', validatorSelfStake)
-  console.log('Total inactive delegator stake:', delegatorUnclaimedStake)
+  console.log('Total inactive delegator stake:', delegatorInactiveStake)
   console.log('Total inactive validator stake:', validatorUnclaimedStake)
   console.log('Total inactive total staked:', validatorUnclaimedTotalStaked)
-  console.log('Compare inactive stake amounts', validatorUnclaimedStake + delegatorUnclaimedStake, validatorUnclaimedTotalStaked)
+  console.log('Compare inactive stake amounts', validatorUnclaimedStake + delegatorInactiveStake, validatorUnclaimedTotalStaked)
   console.log('Total unclaimed rewards:', checkpointRewards - delegatorClaimedRewards - validatorClaimedRewards)
   console.log('Compare stake amount:', totalStake, delegatorStakeAmount + validatorSelfStake - validatorUnclaimedTotalStaked)
-  console.log('Surplus', maticBalance - totalStake - validatorUnclaimedStake - delegatorUnclaimedStake - delegatorUnclaimedRewards - validatorUnclaimedRewards)
+  console.log('Surplus', maticBalance - totalStake - validatorUnclaimedStake - delegatorUnclaimedStake - delegatorInactiveStake - delegatorUnclaimedRewards - validatorUnclaimedRewards)
 }
 
 void main()
