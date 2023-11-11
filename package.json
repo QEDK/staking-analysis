@@ -13,7 +13,7 @@
   "author": "QEDK",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "dotenv": "^16.3.1",
     "ethers": "^6.6.4",
     "graphql": "^16.8.1",
